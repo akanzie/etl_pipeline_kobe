@@ -1,0 +1,25 @@
+{
+    "name": "KOBE_Sales_Medallion_Pipeline",
+    "storage": "/mnt/kobe-datalake/pipeline_storage",
+    "configuration": {
+        "pipelines.use_referenced_libraries": "true"
+    },
+    "clusters": [
+        {
+            "label": "default",
+            "autoscale": {
+                "min_workers": 1,
+                "max_workers": 5
+            }
+        }
+    ],
+    "libraries": [
+        { "file": { "path": "transformations/bronze" } },
+        { "file": { "path": "transformations/silver" } },
+        { "file": { "path": "transformations/gold" } }
+    ],
+    "target": "kobe_sales_catalog",
+    "continuous": false,
+    "development": true,
+    "photon": true
+}

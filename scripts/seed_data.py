@@ -91,8 +91,20 @@ def seed():
                 ('2024-04', 'S001', 520),
                 ('2024-04', 'S002', 640),
                 ('2024-04', 'S003', 310);
+            """,
+            """
+            INSERT OR REPLACE INTO fact_inventory_snapshot
+                (month_id, store_id, product_id, opening_stock)
+            VALUES
+                ('2024-03', 'S001', 1, 2000),
+                ('2024-03', 'S002', 1, 2500),
+                ('2024-03', 'S003', 2, 1000),
+                ('2024-04', 'S001', 1, 1500),
+                ('2024-04', 'S002', 1, 1800),
+                ('2024-04', 'S003', 2, 800);
             """
         ]
+
 
         for cmd in sql_commands:
             db.execute(text(cmd))

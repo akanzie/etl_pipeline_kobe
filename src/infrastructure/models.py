@@ -107,4 +107,28 @@ class GoldSalesCube(Base):
 # Indices
 Index("idx_sales_store", DailySales.store_id)
 Index("idx_sales_product", DailySales.product_id)
-Index("idx_cube_main_query", GoldSalesCube.month_id, GoldSalesCube.cooperative_id, GoldSalesCube.region_id, GoldSalesCube.business_model_id, GoldSalesCube.category)
+class ProductHistory(Base):
+    __tablename__ = "master_products_hist"
+    hist_id = Column(Integer, primary_key=True, autoincrement=True)
+    product_id = Column(Integer, ForeignKey("master_products.product_id"), nullable=False)
+    price = Column(Numeric(10, 2))
+    effective_date = Column(Date, nullable=False)
+    end_date = Column(Date)
+    is_current = Column(Boolean, default=True)
+
+class InventorySnapshot(Base):
+    __tablename__ = "fact_inventory_snapshot"
+    month_id = Column(String(7), ForeignKey("master_calendar.month_id"), primary_key=True)
+    store_id = Column(String(50), ForeignKey("master_stores.store_id"), primary_key=True)
+    product_id = Column(Integer, ForeignKey("master_products.product_id"), primary_key=True)
+    opening_stock = Column(Integer, default=0)
+
+class GoldMarkdownPerformance(Base):
+    __tablename__ = "gold_markdown_performance"
+    month_id = Column(String(7), primary_key=True)
+    category = Column(String(100), primary_key=True)
+    classification = Column(String(50), primary_key=True)
+    total_sales = Column(Numeric(18, 2))
+    avg_sell_through = Column(Numeric(10, 4))
+    markdown_impact = Column(Numeric(10, 4))
+
