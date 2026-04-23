@@ -5,6 +5,7 @@
 - Đã giữ lại `sale_date` ở `fact_daily_sales` và derive thêm `month_id`, `year`, `month`, `day`.
 - Đã chuẩn hóa `fact_daily_customer_count` để ưu tiên grain ngày nếu nguồn có cột ngày, đồng thời vẫn fallback được từ `month_id`.
 - Đã sửa `gold_sales_cube` sang aggregate theo ngày và join `customer_count` theo ngày để tránh fan-out dữ liệu từ tháng xuống ngày.
+- Đã điều chỉnh `cluster_by` của `gold_sales_cube` còn 4 cột để tương thích giới hạn Liquid clustering của Databricks.
 
 ## 2. File thay đổi
 - `transformations/bronze/bronze_calendar_raw.py` (xóa)

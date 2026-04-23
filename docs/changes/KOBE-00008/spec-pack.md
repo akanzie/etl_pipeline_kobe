@@ -29,6 +29,11 @@
 - `fact_daily_customer_count`: grain theo ngày/cửa hàng nếu nguồn có ngày; nếu nguồn chỉ có `month_id` thì chuẩn hóa về ngày đầu tháng để tránh nhân bản dữ liệu.
 - `gold_sales_cube`: grain theo ngày + các business dimensions hiện hữu.
 
+### 3.1.1. Chiến lược clustering trên Databricks
+- `gold_sales_cube` dùng `cluster_by=["sale_date", "cooperative_id", "region_id", "business_model_id"]`.
+- Lý do: Liquid clustering trên Databricks chỉ hỗ trợ tối đa 4 cột clustering.
+- Các cột `year`, `month`, `day` vẫn được giữ trong output để phục vụ filter và dashboard, nhưng không dùng trực tiếp trong `cluster_by`.
+
 ### 3.2. Quy tắc tính toán Gold
 - `total_qty = SUM(quantity_sold)`
 - `total_amt = SUM(sales_amount)`

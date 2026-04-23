@@ -11,7 +11,7 @@ def _safe_divide(numerator, denominator):
 
 @dp.materialized_view(
     comment="Gold - Cube doanh số theo ngày phục vụ Databricks SQL",
-    cluster_by=["year", "month", "day", "cooperative_id", "region_id", "business_model_id"]
+    cluster_by=["sale_date", "cooperative_id", "region_id", "business_model_id"]
 )
 def gold_sales_cube():
     sales = spark.read.table("fact_daily_sales").alias("sales")
