@@ -11,7 +11,7 @@ def _normalize_category_name():
 
 def _build_week_key(date_column):
     return F.concat(
-        F.date_format(date_column, "YYYY"),
+        F.date_format(date_column, "yyyy"),
         F.lit("W"),
         F.lpad(F.weekofyear(date_column).cast("string"), 2, "0"),
     )
