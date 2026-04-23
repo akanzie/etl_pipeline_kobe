@@ -1,7 +1,7 @@
 from pyspark import pipelines as dp
 
 @dp.table(
-    comment="Bronze - Raw customer count data ingested from cloud storage"
+    comment="Bronze - Dữ liệu lượt khách thô được nạp từ vùng landing"
 )
 def bronze_customer_count_raw():
     return (
@@ -9,6 +9,6 @@ def bronze_customer_count_raw():
         .option("cloudFiles.format", "csv")
         .option("header", "true")
         .option("cloudFiles.inferColumnTypes", "true")
-        .option("cloudFiles.schemaHints", "customer_count int")
+        .option("cloudFiles.schemaHints", "month_id string, customer_count int")
         .load("/Volumes/workspace/default/raw_data/customer_count/")
     )
