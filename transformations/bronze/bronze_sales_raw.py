@@ -11,7 +11,7 @@ def bronze_sales_raw():
         .option("cloudFiles.inferColumnTypes", "true")
         .option(
             "cloudFiles.schemaHints",
-            "sale_date string, product_id int, quantity_sold int, sales_amount decimal(14,2)",
+            "sale_date date, product_id int, quantity_sold int, sales_amount decimal(14,2)",
         )
         .load("/Volumes/workspace/default/raw_data/sales/")
     )

@@ -9,6 +9,6 @@ def bronze_customer_count_raw():
         .option("cloudFiles.format", "csv")
         .option("header", "true")
         .option("cloudFiles.inferColumnTypes", "true")
-        .option("cloudFiles.schemaHints", "month_id string, customer_count int")
+        .option("cloudFiles.schemaHints", "month_id date, customer_count int")
         .load("/Volumes/workspace/default/raw_data/customer_count/")
     )
