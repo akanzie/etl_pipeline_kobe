@@ -33,7 +33,6 @@ def _parse_business_date(column_name: str):
 
 
 @dp.table(
-    name="tmn_kobe.fact.daily_customer_count",
     comment="Silver - Fact lượt khách theo ngày hoặc theo kỳ đã chuẩn hóa"
 )
 @dp.expect_or_fail("valid_customer_date", "customer_date IS NOT NULL")

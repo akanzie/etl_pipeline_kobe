@@ -13,7 +13,6 @@ def _parse_business_date(column_name: str):
 
 
 @dp.table(
-    name="tmn_kobe.fact.daily_sales",
     comment="Silver - Fact doanh số theo ngày đã chuẩn hóa"
 )
 @dp.expect_or_drop("no_extreme_outliers", "sales_amount < 1000000")
@@ -52,6 +51,6 @@ def fact_daily_sales():
 )
 def master_products_scd2():
     return (
-        spark.read.table("tmn_kobe.master.products")
+        spark.read.table("tmn_kobe.master.master_products")
         .withColumn("is_current", F.lit(True))
     )
