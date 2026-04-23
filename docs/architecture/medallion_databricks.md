@@ -13,3 +13,5 @@ Tài liệu này mô tả nguyên tắc thiết kế cho pipeline Databricks tro
 - Gold ưu tiên grain sát với nghiệp vụ gốc hơn là ép về grain tháng.
 - KPI có mẫu số bằng `0` hoặc `NULL` phải trả về `NULL` để tránh tạo chỉ số sai.
 - Mọi thay đổi về grain thời gian phải cập nhật `docs/changes/<TICKET>/spec-pack.md` trước khi mở rộng sang layer khác.
+- Khi một dimension nghiệp vụ mới chưa có master riêng, được phép suy ra master ở tầng Silver từ khóa tự nhiên đã chuẩn hóa.
+- ID của dimension suy ra phải mang tính xác định và idempotent giữa các lần chạy pipeline; không dùng cách đánh số phụ thuộc thứ tự dữ liệu đến.

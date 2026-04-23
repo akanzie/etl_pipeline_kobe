@@ -2,23 +2,31 @@ from pyspark import pipelines as dp
 from pyspark.sql import functions as F
 
 
-def _safe_divide(numerator, denominator):
+def _normalize_category_name():
     return F.when(
-        denominator.isNull() | (denominator == F.lit(0)),
-        F.lit(None).cast("decimal(18,2)"),
-    ).otherwise((numerator / denominator).cast("decimal(18,2)"))
+        F.trim(F.coalesce(F.col("products.category"), F.lit(""))) == F.lit(""),
+        F.lit("UNKNOWN"),
+    ).otherwise(F.trim(F.col("products.category")))
+
+
+def _build_week_key(date_column):
+    return F.concat(
+        F.date_format(date_column, "YYYY"),
+        F.lit("W"),
+        F.lpad(F.weekofyear(date_column).cast("string"), 2, "0"),
+    )
 
 
 @dp.materialized_view(
-    comment="Gold - Cube doanh số theo ngày phục vụ Databricks SQL",
-    cluster_by=["sale_date", "cooperative_id", "region_id", "business_model_id"]
+    comment="Gold - Cube doanh số theo schema business mới cho Databricks SQL",
+    cluster_by=["date", "cooperative_id", "region_id", "business_model_id"]
 )
 def gold_sales_cube():
     sales = spark.read.table("fact_daily_sales").alias("sales")
     stores = spark.read.table("master_stores").alias("stores")
     regions = spark.read.table("master_regions").alias("regions")
     products = spark.read.table("master_products").alias("products")
-    customer_count = spark.read.table("fact_daily_customer_count").alias("customer_count")
+    categories = spark.read.table("master_categories").alias("categories")
 
     sales_enriched = (
         sales
@@ -26,83 +34,53 @@ def gold_sales_cube():
         .join(regions, F.col("stores.region_id") == F.col("regions.region_id"), "inner")
         .join(products, F.col("sales.product_id") == F.col("products.product_id"), "inner")
         .join(
-            customer_count,
-            (F.col("sales.store_id") == F.col("customer_count.store_id"))
-            & (F.col("sales.sale_date") == F.col("customer_count.customer_date")),
-            "left",
+            categories,
+            _normalize_category_name() == F.col("categories.category_name"),
+            "inner",
         )
         .select(
-            F.col("sales.sale_date").alias("sale_date"),
-            F.col("sales.month_id").alias("month_id"),
-            F.col("sales.year").alias("year"),
-            F.col("sales.month").alias("month"),
-            F.col("sales.day").alias("day"),
+            F.date_format(F.col("sales.sale_date"), "yyyy-MM-dd").alias("date"),
             F.col("regions.cooperative_id").alias("cooperative_id"),
             F.col("stores.region_id").alias("region_id"),
             F.col("stores.business_model_id").alias("business_model_id"),
-            F.coalesce(F.col("products.category"), F.lit("")).alias("category"),
+            F.col("categories.category_id").alias("category_id"),
             F.col("sales.store_id").alias("store_id"),
             F.col("sales.product_id").alias("product_id"),
-            F.col("sales.classification").alias("classification"),
+            _build_week_key(F.col("sales.sale_date")).alias("week"),
+            F.date_format(F.col("sales.sale_date"), "yyyy-MM").alias("month"),
             F.col("sales.quantity_sold").alias("quantity_sold"),
             F.col("sales.sales_amount").alias("sales_amount"),
-            F.col("customer_count.customer_count").alias("customer_count"),
         )
     )
 
-    aggregated = (
+    return (
         sales_enriched
         .groupBy(
-            "sale_date",
-            "month_id",
-            "year",
-            "month",
-            "day",
+            "date",
             "cooperative_id",
             "region_id",
             "business_model_id",
-            "category",
+            "category_id",
             "store_id",
             "product_id",
-            "classification",
+            "week",
+            "month",
         )
         .agg(
-            F.sum("quantity_sold").cast("decimal(18,2)").alias("total_qty"),
-            F.sum("sales_amount").cast("decimal(18,2)").alias("total_amt"),
-            F.max("customer_count").cast("decimal(18,2)").alias("customer_count"),
+            F.sum("sales_amount").cast("double").alias("total_amt"),
+            F.sum("quantity_sold").cast("int").alias("total_qty"),
         )
-    )
-
-    cube = (
-        aggregated
-        .withColumn("avg_unit_price", _safe_divide(F.col("total_amt"), F.col("total_qty")))
-        .withColumn("qty_pi", _safe_divide(F.col("total_qty"), F.col("customer_count")))
-        .withColumn("amt_pi", _safe_divide(F.col("total_amt"), F.col("customer_count")))
-        .withColumn("markdown_qty", F.lit(0).cast("decimal(18,2)"))
-        .withColumn("created_at", F.current_timestamp())
-        .withColumn("updated_at", F.current_timestamp())
-    )
-
-    return cube.select(
-        "sale_date",
-        "month_id",
-        "year",
-        "month",
-        "day",
-        "cooperative_id",
-        "region_id",
-        "business_model_id",
-        "category",
-        "store_id",
-        "product_id",
-        "classification",
-        "total_qty",
-        "total_amt",
-        "customer_count",
-        "avg_unit_price",
-        "qty_pi",
-        "amt_pi",
-        "markdown_qty",
-        "created_at",
-        "updated_at",
+        .select(
+            "date",
+            "cooperative_id",
+            "region_id",
+            "business_model_id",
+            "category_id",
+            "store_id",
+            "product_id",
+            "week",
+            "month",
+            "total_amt",
+            "total_qty",
+        )
     )

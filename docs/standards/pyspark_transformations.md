@@ -18,6 +18,11 @@ Giữ cho các file trong `transformations/` ngắn, dễ review và nhất quá
 - `@dp.expect_or_drop` chỉ dùng cho dữ liệu nhiễu hoặc outlier đã được business chấp nhận loại bỏ.
 - Công thức tính KPI phải xử lý an toàn với `NULL` và `0`.
 
+## Quy ước dimension dẫn xuất
+- Nếu phải nâng một thuộc tính text thành master dimension, cần chuẩn hóa natural key trước khi sinh ID.
+- ID dẫn xuất phải ổn định giữa các lần chạy, ưu tiên hàm băm xác định thay vì `row_number()` hoặc `dense_rank()` phụ thuộc thứ tự dữ liệu.
+- Tầng Gold ưu tiên dùng `*_id` thay cho text tự do khi thuộc tính đó đã được nâng lên master dimension.
+
 ## Gợi ý refactor tiếp theo
 - Tách helper dùng chung cho Auto Loader.
 - Tách helper chuẩn hóa ngày và audit columns.
