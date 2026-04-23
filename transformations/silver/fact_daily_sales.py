@@ -13,7 +13,8 @@ def _parse_business_date(column_name: str):
 
 
 @dp.table(
-    comment="Silver - Fact doanh số theo ngày đã chuẩn hóa cho Databricks"
+    name="tmn_kobe.fact.daily_sales",
+    comment="Silver - Fact doanh số theo ngày đã chuẩn hóa"
 )
 @dp.expect_or_drop("no_extreme_outliers", "sales_amount < 1000000")
 @dp.expect_or_fail("valid_quantity", "quantity_sold > 0")
@@ -22,7 +23,7 @@ def _parse_business_date(column_name: str):
 @dp.expect_or_fail("valid_product_id", "product_id IS NOT NULL")
 def fact_daily_sales():
     return (
-        spark.readStream.table("bronze_sales_raw")
+        spark.readStream.table("tmn_kobe.default.bronze_sales_raw")
         .withColumn("sale_date", _parse_business_date("month_id"))
         .withColumn("year", F.year(F.col("sale_date")))
         .withColumn("month", F.month(F.col("sale_date")))
@@ -51,6 +52,6 @@ def fact_daily_sales():
 )
 def master_products_scd2():
     return (
-        spark.read.table("master_products")
+        spark.read.table("tmn_kobe.master.products")
         .withColumn("is_current", F.lit(True))
     )

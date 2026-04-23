@@ -1,7 +1,8 @@
 from pyspark import pipelines as dp
 
 @dp.table(
-    comment="Bronze - Raw stores data ingested from cloud storage"
+    name="tmn_kobe.default.bronze_stores_raw",
+    comment="Bronze - Dữ liệu cửa hàng thô được nạp từ vùng landing"
 )
 def bronze_stores_raw():
     return (

@@ -18,15 +18,16 @@ def _build_week_key(date_column):
 
 
 @dp.materialized_view(
-    comment="Gold - Cube doanh số theo schema business mới cho Databricks SQL",
+    name="tmn_kobe.fact.sales_cube",
+    comment="Gold - Cube doanh số theo schema business mới",
     cluster_by=["date", "cooperative_id", "region_id", "business_model_id"]
 )
 def gold_sales_cube():
-    sales = spark.read.table("fact_daily_sales").alias("sales")
-    stores = spark.read.table("master_stores").alias("stores")
-    regions = spark.read.table("master_regions").alias("regions")
-    products = spark.read.table("master_products").alias("products")
-    categories = spark.read.table("master_categories").alias("categories")
+    sales = spark.read.table("tmn_kobe.fact.daily_sales").alias("sales")
+    stores = spark.read.table("tmn_kobe.master.stores").alias("stores")
+    regions = spark.read.table("tmn_kobe.master.regions").alias("regions")
+    products = spark.read.table("tmn_kobe.master.products").alias("products")
+    categories = spark.read.table("tmn_kobe.master.categories").alias("categories")
 
     sales_enriched = (
         sales

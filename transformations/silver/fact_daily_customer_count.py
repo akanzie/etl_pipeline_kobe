@@ -33,13 +33,14 @@ def _parse_business_date(column_name: str):
 
 
 @dp.table(
+    name="tmn_kobe.fact.daily_customer_count",
     comment="Silver - Fact lượt khách theo ngày hoặc theo kỳ đã chuẩn hóa"
 )
 @dp.expect_or_fail("valid_customer_date", "customer_date IS NOT NULL")
 @dp.expect_or_fail("valid_store_id", "store_id IS NOT NULL")
 @dp.expect("valid_customer_count", "customer_count IS NULL OR customer_count >= 0")
 def fact_daily_customer_count():
-    raw_customer_count = spark.readStream.table("bronze_customer_count_raw")
+    raw_customer_count = spark.readStream.table("tmn_kobe.default.bronze_customer_count_raw")
     source_date_column = _resolve_date_column(raw_customer_count.columns)
 
     return (

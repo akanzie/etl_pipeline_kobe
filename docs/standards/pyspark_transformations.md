@@ -23,6 +23,11 @@ Giữ cho các file trong `transformations/` ngắn, dễ review và nhất quá
 - ID dẫn xuất phải ổn định giữa các lần chạy, ưu tiên hàm băm xác định thay vì `row_number()` hoặc `dense_rank()` phụ thuộc thứ tự dữ liệu.
 - Tầng Gold ưu tiên dùng `*_id` thay cho text tự do khi thuộc tính đó đã được nâng lên master dimension.
 
+## Quy ước namespace Databricks
+- Với Unity Catalog, tên bảng persisted nên được khai báo rõ ở decorator bằng `name="catalog.schema.table"`.
+- `spark.read.table(...)` cho bảng persisted cũng phải dùng tên fully-qualified nếu dữ liệu nằm khác schema mặc định.
+- Tên bảng vật lý nên phản ánh domain nghiệp vụ trong schema đích, không lặp lại prefix của schema trong tên bảng.
+
 ## Gợi ý refactor tiếp theo
 - Tách helper dùng chung cho Auto Loader.
 - Tách helper chuẩn hóa ngày và audit columns.

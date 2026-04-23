@@ -15,3 +15,9 @@ Tài liệu này mô tả nguyên tắc thiết kế cho pipeline Databricks tro
 - Mọi thay đổi về grain thời gian phải cập nhật `docs/changes/<TICKET>/spec-pack.md` trước khi mở rộng sang layer khác.
 - Khi một dimension nghiệp vụ mới chưa có master riêng, được phép suy ra master ở tầng Silver từ khóa tự nhiên đã chuẩn hóa.
 - ID của dimension suy ra phải mang tính xác định và idempotent giữa các lần chạy pipeline; không dùng cách đánh số phụ thuộc thứ tự dữ liệu đến.
+
+## Quy tắc namespace Unity Catalog
+- Bronze publish vào schema `default` của catalog nghiệp vụ.
+- Dimension/master publish vào schema `master`.
+- Fact và cube publish vào schema `fact`, trừ khi có đặc tả khác trong `spec-pack`.
+- Với dataset persisted, ưu tiên dùng tên fully-qualified `catalog.schema.table` trong cả chiều đọc và ghi để tránh lệ thuộc cấu hình mặc định của pipeline.

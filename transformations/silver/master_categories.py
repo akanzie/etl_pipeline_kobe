@@ -14,11 +14,12 @@ def _build_category_id(column):
 
 
 @dp.materialized_view(
-    comment="Silver - Master danh mục sản phẩm suy ra từ master_products"
+    name="tmn_kobe.master.categories",
+    comment="Silver - Master danh mục sản phẩm suy ra từ master sản phẩm"
 )
 def master_categories():
     normalized_categories = (
-        spark.read.table("master_products")
+        spark.read.table("tmn_kobe.master.products")
         .withColumn("category_name", _normalize_category_name())
         .select("category_name")
         .dropDuplicates()
