@@ -23,8 +23,7 @@ def _parse_business_date(column_name: str):
 def fact_daily_sales():
     return (
         spark.readStream.table("bronze_sales_raw")
-        .withColumn("sale_date", _parse_business_date("sale_date"))
-        .withColumn("month_id", F.date_format(F.col("sale_date"), "yyyy-MM"))
+        .withColumn("sale_date", _parse_business_date("month_id"))
         .withColumn("year", F.year(F.col("sale_date")))
         .withColumn("month", F.month(F.col("sale_date")))
         .withColumn("day", F.dayofmonth(F.col("sale_date")))
@@ -33,7 +32,6 @@ def fact_daily_sales():
         .withColumn("is_active", F.lit(True))
         .select(
             "sale_date",
-            "month_id",
             "year",
             "month",
             "day",
