@@ -3,11 +3,11 @@ from pyspark.sql import functions as F
 
 
 DATE_COLUMN_CANDIDATES = (
+    "date",
+    "sale_date",
     "customer_date",
     "count_date",
     "business_date",
-    "sale_date",
-    "month_id",
 )
 
 
@@ -18,7 +18,7 @@ def _resolve_date_column(columns: list[str]) -> str:
     raise ValueError(
         "Không tìm thấy cột thời gian cho bronze_customer_count_raw. "
         "Cần một trong các cột: customer_date, count_date, business_date, "
-        "sale_date hoặc month_id."
+        "sale_date hoặc date."
     )
 
 
@@ -28,14 +28,17 @@ def _parse_business_date(column_name: str):
         F.to_date(raw_value),
         F.to_date(raw_value, "yyyy-MM-dd"),
         F.to_date(raw_value, "yyyy/MM/dd"),
+        F.to_date(raw_value, "yyyyMMdd"),
         F.to_date(F.concat(raw_value, F.lit("-01")), "yyyy-MM-dd"),
+        F.to_date(F.concat(raw_value, F.lit("/01")), "yyyy/MM/dd"),
     )
 
 
 @dp.table(
-    comment="Silver - Fact lượt khách theo ngày hoặc theo kỳ đã chuẩn hóa"
+    name="tmn_kobe.fact.fact_daily_customer_count",
+    comment="Silver - Fact lượt khách theo ngày đã chuẩn hóa"
 )
-@dp.expect_or_fail("valid_customer_date", "customer_date IS NOT NULL")
+@dp.expect_or_fail("valid_sale_date", "sale_date IS NOT NULL")
 @dp.expect_or_fail("valid_store_id", "store_id IS NOT NULL")
 @dp.expect("valid_customer_count", "customer_count IS NULL OR customer_count >= 0")
 def fact_daily_customer_count():
@@ -44,16 +47,16 @@ def fact_daily_customer_count():
 
     return (
         raw_customer_count
-        .withColumn("customer_date", _parse_business_date(source_date_column))
-        .withColumn("month_id", F.date_format(F.col("customer_date"), "yyyy-MM"))
-        .withColumn("year", F.year(F.col("customer_date")))
-        .withColumn("month", F.month(F.col("customer_date")))
-        .withColumn("day", F.dayofmonth(F.col("customer_date")))
+        .filter(F.col(source_date_column).isNotNull())
+        .filter(F.trim(F.col(source_date_column).cast("string")) != "")
+        .withColumn("sale_date", _parse_business_date(source_date_column))
+        .withColumn("year", F.year(F.col("sale_date")))
+        .withColumn("month", F.month(F.col("sale_date")))
+        .withColumn("day", F.dayofmonth(F.col("sale_date")))
         .withColumn("created_at", F.current_timestamp())
         .withColumn("updated_at", F.current_timestamp())
         .select(
-            "customer_date",
-            "month_id",
+            "sale_date",
             "year",
             "month",
             "day",

@@ -18,6 +18,7 @@ def _build_week_key(date_column):
 
 
 @dp.materialized_view(
+    name="tmn_kobe.fact.gold_sales_cube",
     comment="Gold - Cube doanh số theo schema business mới",
     cluster_by=["date", "cooperative_id", "region_id", "business_model_id"]
 )

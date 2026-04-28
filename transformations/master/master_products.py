@@ -2,6 +2,7 @@ from pyspark import pipelines as dp
 from pyspark.sql import functions as F
 
 @dp.table(
+    name="master_products",
     comment="Silver - Master products with validation"
 )
 @dp.expect_or_fail("valid_product_id", "product_id IS NOT NULL")
@@ -11,7 +12,7 @@ def master_products():
         .withColumn("created_at", F.current_timestamp())
         .withColumn("updated_at", F.current_timestamp())
         .select(
-            "product_id",
+            F.col("product_id").cast("long"),
             "product_name",
             "category",
             "created_at",

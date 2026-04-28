@@ -1,10 +1,10 @@
 from pyspark import pipelines as dp
 
 @dp.table(
-    name="bronze_sales_raw",
-    comment="Bronze - Dữ liệu bán hàng thô được nạp từ vùng landing"
+    name="bronze_categories_raw",
+    comment="Bronze - Dữ liệu categories thô được nạp từ vùng landing"
 )
-def bronze_sales_raw():
+def bronze_categories_raw():
     return (
         spark.readStream.format("cloudFiles")
         .option("cloudFiles.format", "csv")
@@ -12,7 +12,7 @@ def bronze_sales_raw():
         .option("cloudFiles.inferColumnTypes", "true")
         .option(
             "cloudFiles.schemaHints",
-            "sale_date date, product_id int, quantity_sold int, sales_amount decimal(14,2)",
+            "category_id int, category_name string",
         )
-        .load("/Volumes/workspace/default/raw_data/sales/")
+        .load("/Volumes/workspace/default/raw_data/categories/")
     )
