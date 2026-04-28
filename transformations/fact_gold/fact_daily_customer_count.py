@@ -1,13 +1,18 @@
-from pyspark import pipelines as dp
+from __future__ import annotations
+
 from pyspark.sql import functions as F
 
+from transformations.upsert_utils import merge_dataframe
 
+
+TARGET_TABLE = "tmn_kobe.fact.fact_daily_customer_count"
+KEY_COLUMNS = ("sale_date", "store_id")
 DATE_COLUMN_CANDIDATES = (
+    "date",
+    "sale_date",
     "customer_date",
     "count_date",
     "business_date",
-    "sale_date",
-    "month_id",
 )
 
 
@@ -18,7 +23,7 @@ def _resolve_date_column(columns: list[str]) -> str:
     raise ValueError(
         "Không tìm thấy cột thời gian cho bronze_customer_count_raw. "
         "Cần một trong các cột: customer_date, count_date, business_date, "
-        "sale_date hoặc month_id."
+        "sale_date hoặc date."
     )
 
 
@@ -28,38 +33,47 @@ def _parse_business_date(column_name: str):
         F.to_date(raw_value),
         F.to_date(raw_value, "yyyy-MM-dd"),
         F.to_date(raw_value, "yyyy/MM/dd"),
+        F.to_date(raw_value, "yyyyMMdd"),
         F.to_date(F.concat(raw_value, F.lit("-01")), "yyyy-MM-dd"),
+        F.to_date(F.concat(raw_value, F.lit("/01")), "yyyy/MM/dd"),
     )
 
 
-@dp.table(
-    comment="Silver - Fact lượt khách theo ngày hoặc theo kỳ đã chuẩn hóa"
-)
-@dp.expect_or_fail("valid_customer_date", "customer_date IS NOT NULL")
-@dp.expect_or_fail("valid_store_id", "store_id IS NOT NULL")
-@dp.expect("valid_customer_count", "customer_count IS NULL OR customer_count >= 0")
-def fact_daily_customer_count():
-    raw_customer_count = spark.readStream.table("tmn_kobe.default.bronze_customer_count_raw")
+def build_fact_daily_customer_count_dataframe(spark):
+    raw_customer_count = spark.read.table("tmn_kobe.default.bronze_customer_count_raw")
     source_date_column = _resolve_date_column(raw_customer_count.columns)
 
     return (
         raw_customer_count
-        .withColumn("customer_date", _parse_business_date(source_date_column))
-        .withColumn("month_id", F.date_format(F.col("customer_date"), "yyyy-MM"))
-        .withColumn("year", F.year(F.col("customer_date")))
-        .withColumn("month", F.month(F.col("customer_date")))
-        .withColumn("day", F.dayofmonth(F.col("customer_date")))
+        .filter(F.col(source_date_column).isNotNull())
+        .filter(F.trim(F.col(source_date_column).cast("string")) != "")
+        .withColumn("store_id_long", F.expr("try_cast(store_id as long)"))
+        .withColumn("sale_date", _parse_business_date(source_date_column))
+        .filter(F.col("sale_date").isNotNull())
+        .filter(F.col("store_id_long").isNotNull())
+        .filter((F.col("customer_count").isNull()) | (F.col("customer_count") >= 0))
+        .withColumn("year", F.year(F.col("sale_date")))
+        .withColumn("month", F.month(F.col("sale_date")))
+        .withColumn("day", F.dayofmonth(F.col("sale_date")))
         .withColumn("created_at", F.current_timestamp())
         .withColumn("updated_at", F.current_timestamp())
         .select(
-            "customer_date",
-            "month_id",
+            "sale_date",
             "year",
             "month",
             "day",
-            "store_id",
-            "customer_count",
+            F.col("store_id_long").alias("store_id"),
+            F.col("customer_count").cast("int").alias("customer_count"),
             "created_at",
             "updated_at",
         )
+    )
+
+
+def run(spark) -> None:
+    merge_dataframe(
+        spark,
+        build_fact_daily_customer_count_dataframe(spark),
+        target_table=TARGET_TABLE,
+        key_columns=KEY_COLUMNS,
     )

@@ -1,5 +1,20 @@
-from pyspark import pipelines as dp
+from __future__ import annotations
+
 from pyspark.sql import functions as F
+
+from transformations.upsert_utils import merge_dataframe
+
+
+TARGET_TABLE = "tmn_kobe.fact.gold_sales_cube"
+KEY_COLUMNS = (
+    "date",
+    "cooperative_id",
+    "region_id",
+    "business_model_id",
+    "category_id",
+    "store_id",
+    "product_id",
+)
 
 
 def _normalize_category_name():
@@ -17,11 +32,7 @@ def _build_week_key(date_column):
     )
 
 
-@dp.materialized_view(
-    comment="Gold - Cube doanh số theo schema business mới",
-    cluster_by=["date", "cooperative_id", "region_id", "business_model_id"]
-)
-def gold_sales_cube():
+def build_gold_sales_cube_dataframe(spark):
     sales = spark.read.table("tmn_kobe.fact.fact_daily_sales").alias("sales")
     stores = spark.read.table("tmn_kobe.master.master_stores").alias("stores")
     regions = spark.read.table("tmn_kobe.master.master_regions").alias("regions")
@@ -83,4 +94,13 @@ def gold_sales_cube():
             "total_amt",
             "total_qty",
         )
+    )
+
+
+def run(spark) -> None:
+    merge_dataframe(
+        spark,
+        build_gold_sales_cube_dataframe(spark),
+        target_table=TARGET_TABLE,
+        key_columns=KEY_COLUMNS,
     )

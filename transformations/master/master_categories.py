@@ -1,21 +1,32 @@
-from pyspark import pipelines as dp
+from __future__ import annotations
+
 from pyspark.sql import functions as F
 
-@dp.table(
-    comment="Silver - Master categories dimension"
-)
-@dp.expect_or_fail("valid_category_id", "category_id IS NOT NULL")
-@dp.expect_or_fail("valid_category_name", "category_name IS NOT NULL")
-def master_categories():
-    # Static category mapping
-    categories_data = [
-        (1, "Gạo"),
-        (2, "Dầu ăn"),
-        (3, "Thực phẩm"),
-    ]
-    
+from transformations.upsert_utils import merge_dataframe
+
+
+TARGET_TABLE = "tmn_kobe.master.master_categories"
+KEY_COLUMNS = ("category_id",)
+
+
+def build_master_categories_dataframe(spark):
     return (
-        spark.createDataFrame(categories_data, ["category_id", "category_name"])
+        spark.read.table("tmn_kobe.default.bronze_categories_raw")
+        .filter(F.col("category_id").isNotNull())
+        .filter(F.col("category_name").isNotNull())
+        .select(
+            F.col("category_id").cast("long").alias("category_id"),
+            "category_name",
+        )
         .withColumn("created_at", F.current_timestamp())
         .withColumn("updated_at", F.current_timestamp())
+    )
+
+
+def run(spark) -> None:
+    merge_dataframe(
+        spark,
+        build_master_categories_dataframe(spark),
+        target_table=TARGET_TABLE,
+        key_columns=KEY_COLUMNS,
     )

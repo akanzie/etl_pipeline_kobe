@@ -1,7 +1,7 @@
 from pyspark import pipelines as dp
 
 @dp.table(
-    name="tmn_kobe.default.bronze_cooperatives_raw",
+    name="bronze_cooperatives_raw",
     comment="Bronze - Dữ liệu hợp tác xã thô được nạp từ vùng landing"
 )
 def bronze_cooperatives_raw():
