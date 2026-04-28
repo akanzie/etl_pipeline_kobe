@@ -1,2 +1,0 @@
-"""Nhóm transformation tầng Bronze."""
-

@@ -1,7 +1,7 @@
 from pyspark import pipelines as dp
 
 @dp.table(
-    name="bronze_regions_raw",
+    name="tmn_kobe.default.bronze_regions_raw",
     comment="Bronze - Dữ liệu khu vực thô được nạp từ vùng landing"
 )
 def bronze_regions_raw():

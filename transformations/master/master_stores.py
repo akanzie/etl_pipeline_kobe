@@ -1,37 +1,23 @@
-from __future__ import annotations
-
+from pyspark import pipelines as dp
 from pyspark.sql import functions as F
 
-from transformations.upsert_utils import merge_dataframe
-
-
-TARGET_TABLE = "tmn_kobe.master.master_stores"
-KEY_COLUMNS = ("store_id",)
-
-
-def build_master_stores_dataframe(spark):
+@dp.table(
+    comment="Silver - Master stores with FK validation to regions and business models"
+)
+@dp.expect_or_fail("valid_store_id", "store_id IS NOT NULL")
+@dp.expect_or_fail("valid_region_id", "region_id IS NOT NULL")
+@dp.expect_or_fail("valid_business_model_id", "business_model_id IS NOT NULL")
+def master_stores():
     return (
-        spark.read.table("tmn_kobe.default.bronze_stores_raw")
-        .filter(F.col("store_id").isNotNull())
-        .filter(F.col("region_id").isNotNull())
-        .filter(F.col("business_model_id").isNotNull())
+        spark.readStream.table("tmn_kobe.default.bronze_stores_raw")
         .withColumn("created_at", F.current_timestamp())
         .withColumn("updated_at", F.current_timestamp())
         .select(
-            F.col("store_id").cast("long").alias("store_id"),
+            "store_id",
             "store_name",
-            F.col("region_id").cast("long").alias("region_id"),
-            F.col("business_model_id").cast("long").alias("business_model_id"),
+            "region_id",
+            "business_model_id",
             "created_at",
-            "updated_at",
+            "updated_at"
         )
-    )
-
-
-def run(spark) -> None:
-    merge_dataframe(
-        spark,
-        build_master_stores_dataframe(spark),
-        target_table=TARGET_TABLE,
-        key_columns=KEY_COLUMNS,
     )
